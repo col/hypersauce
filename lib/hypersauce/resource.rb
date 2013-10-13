@@ -18,7 +18,9 @@ module Hypersauce
     end
 
     def method_missing(meth, *args, &block)
-      if attributes.has_key? meth
+      if meth.to_s =~ /(.*?)=/
+        attributes[$1] = args[0]
+      elsif attributes.has_key? meth
         attributes[meth]
       else
         super
@@ -29,8 +31,7 @@ module Hypersauce
 
     def create_attribute_accessors
       if self.class.to_s == 'Hypersauce::Resource'
-        puts 'Cannot define attribute methods directly on Hypersauce::Resource.'
-        puts 'Will use method_missing unless you define a subclass.'
+        puts 'Cannot define attribute methods directly on Hypersauce::Resource. Will use method_missing unless you define a subclass.'
         return
       end
 

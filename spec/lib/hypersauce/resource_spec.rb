@@ -27,11 +27,14 @@ describe Hypersauce::Resource do
 
     describe 'attribute accessors' do
 
-      context 'when using Hypersauce::Resource directly' do
-        its(:attr1) { should eql 'value1' }
-        its(:attr2) { should eql 'value2' }
-        it { should_not respond_to :_links }
-        it { should_not respond_to :_embedded }
+      its(:attr1) { should eql 'value1' }
+      its(:attr2) { should eql 'value2' }
+      it { should_not respond_to :_links }
+      it { should_not respond_to :_embedded }
+      it 'should implement attribute writers' do
+        subject.attr1.should eql 'value1'
+        subject.attr1 = 'new value'
+        subject.attr1.should eql 'new value'
       end
 
       context 'when using a subclass of Hypersauce::Resource' do
@@ -39,10 +42,8 @@ describe Hypersauce::Resource do
         subject { TestApi.new(url: 'http://www.example.com') }
         it { should respond_to :attr1 }
         it { should respond_to :attr2 }
-        its(:attr1) { should eql 'value1' }
-        its(:attr2) { should eql 'value2' }
-        it { should_not respond_to :_links }
-        it { should_not respond_to :_embedded }
+        it { should respond_to :attr1= }
+        it { should respond_to :attr2= }
       end
 
     end
