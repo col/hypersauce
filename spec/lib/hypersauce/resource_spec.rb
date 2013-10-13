@@ -2,11 +2,13 @@ require 'spec_helper'
 
 describe Hypersauce::Resource do
 
+  let(:body) { '{ "attr1": "value1", "attr2": "value2", "_links": {}, "_embedded": {} }' }
+  before do
+    stub_request(:any, 'http://www.example.com').to_return(:body => body)
+  end
+  subject { Hypersauce::Resource.new(url: 'http://www.example.com') }
+
   describe 'attributes' do
-    before do
-      stub_request(:any, 'http://www.example.com').to_return(:body => '{ "attr1": "value1", "attr2": "value2", "_links": {}, "_embedded": {} }')
-    end
-    subject { Hypersauce::Resource.new(url: 'http://www.example.com') }
 
     it { should respond_to :attributes }
     it 'should have 2 attributes' do
@@ -46,6 +48,34 @@ describe Hypersauce::Resource do
         it { should respond_to :attr2= }
       end
 
+    end
+
+  end
+
+  describe 'links' do
+    let(:self_link) { {
+      href: 'http://www.example.com',
+      title: 'Home'
+    }}
+    let(:widgets_link) { {
+        href: 'http://www.example.com/widgets{?max_price}',
+        title: 'Widgets Collection',
+        templated: true
+    }}
+    let(:links) { { :self => self_link, :widgets => widgets_link } }
+    let(:body) { "{ \"_links\": #{JSON.generate(links)} }" }
+
+    it { should respond_to :links }
+    its(:links) { should be_a HashWithIndifferentAccess }
+
+    it 'should have a "self" link' do
+      subject.links[:self].should_not be_nil
+      subject.links[:self].should be_a Hypersauce::Link
+    end
+
+    it 'should have a "widgets" link' do
+      subject.links[:widgets].should_not be_nil
+      subject.links[:widgets].should be_a Hypersauce::Link
     end
 
   end

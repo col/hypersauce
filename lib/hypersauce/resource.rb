@@ -1,6 +1,7 @@
 require 'faraday'
 require 'json'
 require 'active_support/core_ext/hash/indifferent_access'
+require_relative 'link'
 
 module Hypersauce
   class Resource
@@ -14,6 +15,16 @@ module Hypersauce
       @attributes ||= begin
         attributes = response_data.dup.delete_if { |key| key == '_links' || key == '_embedded' }
         HashWithIndifferentAccess.new(attributes)
+      end
+    end
+
+    def links
+      @links ||= begin
+        links = HashWithIndifferentAccess.new()
+        response_data.fetch('_links', {}).each_pair do |key, value|
+          links[key] = Hypersauce::Link.new(value)
+        end
+        links
       end
     end
 
