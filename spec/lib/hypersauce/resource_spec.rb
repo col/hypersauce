@@ -2,11 +2,13 @@ require 'spec_helper'
 
 describe Hypersauce::Resource do
 
+  class TestApi < Hypersauce::Resource; end
   let(:body) { '{ "attr1": "value1", "attr2": "value2", "_links": {}, "_embedded": {} }' }
   before do
     stub_request(:any, 'http://www.example.com').to_return(:body => body)
   end
-  subject { Hypersauce::Resource.new(url: 'http://www.example.com') }
+  let(:api) { Hypersauce::Resource.new(url: 'http://www.example.com') }
+  subject { api }
 
   describe 'attributes' do
 
@@ -40,7 +42,6 @@ describe Hypersauce::Resource do
       end
 
       context 'when using a subclass of Hypersauce::Resource' do
-        class TestApi < Hypersauce::Resource; end
         subject { TestApi.new(url: 'http://www.example.com') }
         it { should respond_to :attr1 }
         it { should respond_to :attr2 }
@@ -58,7 +59,7 @@ describe Hypersauce::Resource do
       title: 'Home'
     }}
     let(:widgets_link) { {
-        href: 'http://www.example.com/widgets{?max_price}',
+        href: 'http://www.example.com/widgets{?search}',
         title: 'Widgets Collection',
         templated: true
     }}
@@ -76,6 +77,57 @@ describe Hypersauce::Resource do
     it 'should have a "widgets" link' do
       subject.links[:widgets].should_not be_nil
       subject.links[:widgets].should be_a Hypersauce::Link
+    end
+
+    describe 'follow widget link accessor' do
+
+      context 'when using Hypersauce::Resource directly' do
+        it {
+          # We shouldn't define new methods on Hypersauce::Resource directly.
+          # The 'widgets' link method will be implemented via 'method_missing'.
+          should_not respond_to :widgets
+        }
+        it 'should call follow_link with the link' do
+          subject.should_receive(:follow_link).with(:widgets, nil)
+          subject.widgets
+        end
+        it 'should call follow_link with options when provided' do
+          options = double(:options)
+          subject.should_receive(:follow_link).with(:widgets, options)
+          subject.widgets(options)
+        end
+      end
+
+      context 'when using a subclass of Hypersauce::Resource' do
+        subject { TestApi.new(url: 'http://www.example.com') }
+        it { should respond_to :widgets }
+        it 'should call follow_link with the link' do
+          subject.should_receive(:follow_link).with(:widgets, nil)
+          subject.widgets
+        end
+        it 'should call follow_link with options when provided' do
+          options = double(:options)
+          subject.should_receive(:follow_link).with(:widgets, options)
+          subject.widgets(options)
+        end
+      end
+
+    end
+
+    describe '#follow_link' do
+      context 'with a valid link key' do
+        subject { api.follow_link(:widgets) }
+        it { should be_a Hypersauce::Resource }
+        its(:url) { should eql 'http://www.example.com/widgets' }
+      end
+      context 'with options' do
+        subject { api.follow_link(:widgets, search: 'new') }
+        its(:url) { should eql 'http://www.example.com/widgets?search=new'}
+      end
+      context 'with invalid link key' do
+        subject { api.follow_link(:invalid) }
+        it { should be_nil }
+      end
     end
 
   end

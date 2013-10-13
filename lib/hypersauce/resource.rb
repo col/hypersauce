@@ -6,9 +6,12 @@ require_relative 'link'
 module Hypersauce
   class Resource
 
+    attr_reader :url
+
     def initialize(options)
       @url = options[:url]
       create_attribute_accessors
+      create_link_accessors
     end
 
     def attributes
@@ -33,9 +36,17 @@ module Hypersauce
         attributes[$1] = args[0]
       elsif attributes.has_key? meth
         attributes[meth]
+      elsif links.has_key? meth
+        follow_link(meth.to_sym, args[0])
       else
         super
       end
+    end
+
+    def follow_link(link_sym, options = {})
+      link = links[link_sym]
+      return nil unless link
+      Hypersauce::Resource.new(url: link.href(options))
     end
 
     private
@@ -54,6 +65,19 @@ module Hypersauce
         end
         self.class.send(:define_method, attr_set_sym) do |value|
           self.attributes[attr_sym] = value
+        end
+      end
+    end
+
+    def create_link_accessors
+      if self.class.to_s == 'Hypersauce::Resource'
+        puts 'Cannot define link methods directly on Hypersauce::Resource. Will use method_missing unless you define a subclass.'
+        return
+      end
+
+      links.each do |link_key, link|
+        self.class.send(:define_method, link_key.to_sym) do |*args|
+          follow_link(link_key.to_sym, args[0])
         end
       end
     end

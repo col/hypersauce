@@ -40,6 +40,7 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  addressable
   faraday
   json
   rspec
