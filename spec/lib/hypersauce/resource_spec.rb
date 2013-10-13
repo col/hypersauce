@@ -24,6 +24,29 @@ describe Hypersauce::Resource do
     it 'should not include "_embedded"' do
       subject.attributes.should_not have_key '_embedded'
     end
+
+    describe 'attribute accessors' do
+
+      context 'when using Hypersauce::Resource directly' do
+        its(:attr1) { should eql 'value1' }
+        its(:attr2) { should eql 'value2' }
+        it { should_not respond_to :_links }
+        it { should_not respond_to :_embedded }
+      end
+
+      context 'when using a subclass of Hypersauce::Resource' do
+        class TestApi < Hypersauce::Resource; end
+        subject { TestApi.new(url: 'http://www.example.com') }
+        it { should respond_to :attr1 }
+        it { should respond_to :attr2 }
+        its(:attr1) { should eql 'value1' }
+        its(:attr2) { should eql 'value2' }
+        it { should_not respond_to :_links }
+        it { should_not respond_to :_embedded }
+      end
+
+    end
+
   end
 
 end
