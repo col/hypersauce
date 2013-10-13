@@ -137,4 +137,43 @@ describe Hypersauce::Resource do
 
   end
 
+  describe 'embedded' do
+
+    let(:widget1) { {
+        name: 'Widget 1',
+        price: 20.0
+    }}
+    let(:widget2) { {
+        name: 'Widget 2',
+        price: 15.99
+    }}
+    let(:embedded) { { :widgets => [widget1, widget2] } }
+    let(:body) { "{ \"_embedded\": #{JSON.generate(embedded)} }" }
+
+    it { should respond_to :embedded }
+    its(:embedded) { should be_a HashWithIndifferentAccess }
+
+    describe 'embedded widgets' do
+      it 'should contain widgets' do
+        subject.embedded[:widgets].should_not be_nil
+      end
+      it 'should be an array' do
+        subject.embedded[:widgets].should be_a Array
+      end
+      it 'should have 2 records' do
+        subject.embedded[:widgets].count.should eql 2
+      end
+      describe 'widget' do
+        subject { api.embedded[:widgets].first }
+        it 'should be a Hypersauce::Resource' do
+          subject.should be_a Hypersauce::Resource
+        end
+        it 'should have the correct attributes' do
+          subject.attributes.should eql HashWithIndifferentAccess.new(widget1)
+        end
+      end
+    end
+
+  end
+
 end

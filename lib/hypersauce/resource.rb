@@ -9,9 +9,11 @@ module Hypersauce
     attr_reader :url
 
     def initialize(options)
-      @url = options[:url]
-      create_attribute_accessors
-      create_link_accessors
+      if @url = options[:url]
+        create_attribute_accessors
+        create_link_accessors
+      end
+      @response_data = options[:data]
     end
 
     def attributes
@@ -28,6 +30,22 @@ module Hypersauce
           links[key] = Hypersauce::Link.new(value)
         end
         links
+      end
+    end
+
+    def embedded
+      @embedded ||= begin
+        embedded = HashWithIndifferentAccess.new()
+        response_data.fetch('_embedded', {}).each_pair do |key, value|
+          if value.is_a? Array
+            embedded[key] = value.map do |data|
+              Hypersauce::Resource.new(data: data)
+            end
+          else
+            embedded[key] = Hypersauce::Resource.new(data: value)
+          end
+        end
+        embedded
       end
     end
 
@@ -56,6 +74,7 @@ module Hypersauce
     def uri
       @uri ||= Addressable::URI.parse(url)
     end
+
     private
 
     def create_attribute_accessors
@@ -90,7 +109,7 @@ module Hypersauce
     end
 
     def response_data
-      @response ||= begin
+      @response_data ||= begin
         connection = Faraday.new(url: @url)
         response = connection.get('')
         JSON.parse(response.body)
