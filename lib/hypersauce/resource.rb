@@ -46,9 +46,16 @@ module Hypersauce
     def follow_link(link_sym, options = {})
       link = links[link_sym]
       return nil unless link
-      Hypersauce::Resource.new(url: link.href(options))
+      # Refactor!
+      link_uri = Addressable::URI.parse(link.href(options))
+      link_uri.scheme = uri.scheme unless link_uri.scheme
+      link_uri.host = uri.host unless link_uri.host
+      Hypersauce::Resource.new(url: link_uri.to_s)
     end
 
+    def uri
+      @uri ||= Addressable::URI.parse(url)
+    end
     private
 
     def create_attribute_accessors

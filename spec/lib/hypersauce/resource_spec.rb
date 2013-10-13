@@ -128,6 +128,11 @@ describe Hypersauce::Resource do
         subject { api.follow_link(:invalid) }
         it { should be_nil }
       end
+      context 'with a relative link' do
+        let(:links) { { :widgets => { href: '/widgets' } } }
+        subject { api.follow_link(:widgets) }
+        its(:url) { should eql 'http://www.example.com/widgets' }
+      end
     end
 
   end
