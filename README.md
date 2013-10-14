@@ -196,7 +196,7 @@ new_widget
 
 ## Resource Subclasses
 
-You can also create Hypersause::Resource subclasses.
+You can also create Hypersauce::Resource subclasses.
  
 Note: I'm not sure how I'll figure out which subclass to create yet. It will probably be based on the link type/rel.
 
